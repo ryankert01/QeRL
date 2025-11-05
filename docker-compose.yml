@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  qerl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qerl:latest
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+    volumes:
+      # Mount directories for data persistence
+      - ./data:/workspace/QeRL/data
+      - ./models:/workspace/QeRL/models
+      - ./ckpt:/workspace/QeRL/ckpt
+      # Optionally mount the entire workspace for development
+      # - .:/workspace/QeRL
+    stdin_open: true
+    tty: true
+    command: bash
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

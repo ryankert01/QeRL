@@ -149,34 +149,49 @@ conda activate qerl
 bash training/dapo_qwen2.5-7b_nvfp4_single_gpu.sh
 ```
 
-## Docker Compose (Optional)
+## Using Docker Compose
 
-For more complex setups, you can use Docker Compose. Create a `docker-compose.yml` file:
+Docker Compose provides a simpler way to manage the container configuration. A `docker-compose.yml` file is included in the repository.
 
-```yaml
-version: '3.8'
+### Setup
 
-services:
-  qerl:
-    image: qerl:latest
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - WANDB_API_KEY=${WANDB_API_KEY}
-    volumes:
-      - ./data:/workspace/QeRL/data
-      - ./models:/workspace/QeRL/models
-      - ./ckpt:/workspace/QeRL/ckpt
-    stdin_open: true
-    tty: true
-    command: bash
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env
 ```
 
-Run with:
+2. Edit `.env` and add your configuration (e.g., WANDB_API_KEY, HF_TOKEN):
+
+```bash
+nano .env  # or use your preferred editor
+```
+
+### Running with Docker Compose
+
+Start the container:
 
 ```bash
 docker-compose up -d
+```
+
+Execute commands in the running container:
+
+```bash
 docker-compose exec qerl bash
+```
+
+Inside the container, activate the environment:
+
+```bash
+conda activate qerl
+bash training/dapo_qwen2.5-7b_nvfp4_single_gpu.sh
+```
+
+Stop the container:
+
+```bash
+docker-compose down
 ```
 
 ## Optimizing Image Size
