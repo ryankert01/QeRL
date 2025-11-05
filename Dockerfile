@@ -102,7 +102,7 @@ RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
     conda create -n llmcompressor python=3.12 -y && \
     conda activate llmcompressor && \
     cd llm-compressor && \
-    pip install -e . && \
+    SETUPTOOLS_SCM_PRETEND_VERSION=0.11.0 pip install -e . && \
     pip install nvidia-ml-py && \
     cd .. && \
     echo "conda activate llmcompressor" >> ~/.llmcompressor_activate
