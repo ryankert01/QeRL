@@ -34,12 +34,13 @@ We propose QeRL, a Quantization-enhanced Reinforcement Learning framework for la
 2. [Highlights](#highlights)
 3. [Introduction](#introduction)
 4. [Installation](#installation)
-5. [Training](#training)
-6. [Evaluation](#evaluation)
-7. [How to contribute](#how-to-contribute)
-8. [Citation](#citation)
-9. [License](#license)
-10. [Acknowledgement](#acknowledgement)
+5. [Docker](#docker)
+6. [Training](#training)
+7. [Evaluation](#evaluation)
+8. [How to contribute](#how-to-contribute)
+9. [Citation](#citation)
+10. [License](#license)
+11. [Acknowledgement](#acknowledgement)
 
 ## News
 - [x] [2025.10] We release [Paper](https://arxiv.org/abs/2510.11696), this GitHub repo [QeRL](https://github.com/NVlabs/QeRL) with all training and inference code.
@@ -90,6 +91,22 @@ conda install nvidia/label/cuda-12.4.1::cuda
 conda install -c nvidia/label/cuda-12.4.1 cudatoolkit
 sh setup_env.sh
 ```
+
+## Docker
+
+QeRL is also available as a Docker image for easy deployment and reproducibility. Docker provides an isolated environment with all dependencies pre-configured.
+
+**Quick Start with Docker:**
+
+```bash
+# Build the image
+docker build -t qerl:latest .
+
+# Run with GPU support
+docker run --gpus all -it qerl:latest
+```
+
+For detailed instructions on building, running, and uploading the Docker image to Docker Hub, see [DOCKER.md](DOCKER.md).
 
 ## Training
 **Create a new conda to quantize your own LLM with NVFP4**
