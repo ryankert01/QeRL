@@ -27,8 +27,9 @@ set -u  # Exit on undefined variable
 # ============================================================================
 
 # Docker configuration
-DOCKER_IMAGE="qerl:latest"
-BUILD_DOCKER=${BUILD_DOCKER:-true}  # Set to false to skip building
+DOCKER_IMAGE="${DOCKER_IMAGE:-qerl:latest}"  # Can be overridden with registry image
+DOCKER_REGISTRY="${DOCKER_REGISTRY:-}"  # Optional: set to pull from registry (e.g., "yourusername/qerl:latest")
+BUILD_DOCKER=${BUILD_DOCKER:-false}  # Set to true to build locally, false to pull from registry
 
 # Model configuration
 BASE_MODEL="Qwen/Qwen2.5-3B-Instruct"  # Model to quantize
@@ -50,12 +51,25 @@ export WANDB_API_KEY=${WANDB_API_KEY:-""}
 export HF_TOKEN=${HF_TOKEN:-""}
 
 # ============================================================================
-# Step 1: Build Docker Image
+# Step 1: Get Docker Image
 # ============================================================================
 
-if [ "${BUILD_DOCKER}" = true ]; then
+# Pull from registry if DOCKER_REGISTRY is set
+if [ -n "${DOCKER_REGISTRY}" ]; then
     echo "============================================"
-    echo "Building Docker image..."
+    echo "Pulling Docker image from registry..."
+    echo "Image: ${DOCKER_REGISTRY}"
+    echo "============================================"
+    docker pull ${DOCKER_REGISTRY}
+    
+    # Tag it with local name for convenience
+    docker tag ${DOCKER_REGISTRY} ${DOCKER_IMAGE}
+    echo "Docker image pulled and tagged successfully!"
+    
+# Build locally if BUILD_DOCKER is true
+elif [ "${BUILD_DOCKER}" = true ]; then
+    echo "============================================"
+    echo "Building Docker image locally..."
     echo "============================================"
     docker build \
         --build-arg USER_ID=$(id -u) \
@@ -64,7 +78,18 @@ if [ "${BUILD_DOCKER}" = true ]; then
         ${WORKSPACE_DIR}
     echo "Docker image built successfully!"
 else
-    echo "Skipping Docker build (BUILD_DOCKER=false)"
+    echo "============================================"
+    echo "Using existing Docker image: ${DOCKER_IMAGE}"
+    echo "============================================"
+    # Verify image exists
+    if ! docker image inspect ${DOCKER_IMAGE} >/dev/null 2>&1; then
+        echo "ERROR: Docker image ${DOCKER_IMAGE} not found!"
+        echo "Please either:"
+        echo "  1. Set DOCKER_REGISTRY to pull from a registry"
+        echo "  2. Set BUILD_DOCKER=true to build locally"
+        echo "  3. Build the image manually: docker build -t ${DOCKER_IMAGE} ."
+        exit 1
+    fi
 fi
 
 # ============================================================================

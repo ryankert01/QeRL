@@ -9,7 +9,7 @@ This directory contains SLURM batch scripts for running QeRL workflows on HPC cl
 A complete pipeline that runs both model quantization and training in Docker containers.
 
 **What it does:**
-1. Builds the Docker image (optional)
+1. Pulls/builds the Docker image (configurable)
 2. Quantizes a model to NVFP4 format using the `llmcompressor` environment
 3. Trains the model with QeRL using the `qerl` environment
 
@@ -19,14 +19,17 @@ A complete pipeline that runs both model quantization and training in Docker con
 # Create logs directory
 mkdir -p logs
 
-# Basic usage (with default Qwen2.5-3B-Instruct model)
+# Recommended: Pull pre-built image from Docker Hub
+DOCKER_REGISTRY="yourusername/qerl:latest" sbatch run_qerl_pipeline.sbatch
+
+# Use existing local image
 sbatch run_qerl_pipeline.sbatch
 
-# Skip Docker build if image already exists
-BUILD_DOCKER=false sbatch run_qerl_pipeline.sbatch
+# Build Docker image locally (slower, not recommended for HPC)
+BUILD_DOCKER=true sbatch run_qerl_pipeline.sbatch
 
 # Use a different model
-BASE_MODEL="Qwen/Qwen2.5-7B-Instruct" sbatch run_qerl_pipeline.sbatch
+BASE_MODEL="Qwen/Qwen2.5-7B-Instruct" DOCKER_REGISTRY="yourusername/qerl:latest" sbatch run_qerl_pipeline.sbatch
 ```
 
 **Environment Variables:**
@@ -40,8 +43,14 @@ export WANDB_API_KEY="your_wandb_api_key"
 # Required for downloading gated models from Hugging Face
 export HF_TOKEN="your_huggingface_token"
 
-# Optional: Skip building Docker image
+# Recommended: Pull from Docker registry (e.g., Docker Hub)
+export DOCKER_REGISTRY="yourusername/qerl:latest"
+
+# Optional: Build Docker image locally (default: false)
 export BUILD_DOCKER=false
+
+# Optional: Use specific local image name (default: qerl:latest)
+export DOCKER_IMAGE="qerl:latest"
 
 # Optional: Change the base model to quantize
 export BASE_MODEL="Qwen/Qwen2.5-7B-Instruct"
@@ -108,19 +117,43 @@ scancel <job_id>
 
 ## Customization Examples
 
+### Pull pre-built image from Docker Hub (Recommended for HPC):
+
+This is the recommended approach for HPC clusters to avoid building on compute nodes:
+
+```bash
+DOCKER_REGISTRY="yourusername/qerl:v1.0.0" sbatch run_qerl_pipeline.sbatch
+```
+
+### Use existing local Docker image:
+
+If the image is already built locally:
+
+```bash
+sbatch run_qerl_pipeline.sbatch
+```
+
+### Build Docker image locally:
+
+Not recommended for HPC, but useful for development:
+
+```bash
+BUILD_DOCKER=true sbatch run_qerl_pipeline.sbatch
+```
+
 ### Run only quantization:
 
 Edit `run_qerl_pipeline.sbatch` and comment out Step 3 (Training).
 
 ### Run only training:
 
-Set `BUILD_DOCKER=false` and comment out Step 2 (Quantization), ensuring the quantized model already exists.
-
-### Use pre-built Docker image from Docker Hub:
+Comment out Step 2 (Quantization), ensuring the quantized model already exists:
 
 ```bash
-DOCKER_IMAGE="yourusername/qerl:v1.0.0" BUILD_DOCKER=false sbatch run_qerl_pipeline.sbatch
+DOCKER_REGISTRY="yourusername/qerl:latest" sbatch run_qerl_pipeline.sbatch
 ```
+
+Then edit the script to skip quantization.
 
 ### Multi-GPU training:
 

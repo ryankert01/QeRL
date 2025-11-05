@@ -262,18 +262,30 @@ For running QeRL workflows on HPC clusters with SLURM job scheduling, we provide
 ### SLURM Pipeline Script
 
 The `run_qerl_pipeline.sbatch` script runs the complete workflow:
-1. Builds the Docker image (optional)
+1. Pulls/builds the Docker image (configurable)
 2. Quantizes a model to NVFP4 format
 3. Trains the model with QeRL
 
-**Quick Start:**
+**Quick Start (Recommended - Pull from Docker Hub):**
 
 ```bash
 # Set required environment variables
 export WANDB_API_KEY="your_wandb_api_key"
 export HF_TOKEN="your_huggingface_token"
+export DOCKER_REGISTRY="yourusername/qerl:latest"
 
 # Submit the job
+mkdir -p logs
+sbatch run_qerl_pipeline.sbatch
+```
+
+**Alternative - Use Local Image:**
+
+```bash
+# If image already exists locally
+export WANDB_API_KEY="your_wandb_api_key"
+export HF_TOKEN="your_huggingface_token"
+
 mkdir -p logs
 sbatch run_qerl_pipeline.sbatch
 ```
@@ -281,11 +293,14 @@ sbatch run_qerl_pipeline.sbatch
 **Customization:**
 
 ```bash
-# Skip Docker build if image already exists
-BUILD_DOCKER=false sbatch run_qerl_pipeline.sbatch
+# Pull specific version from registry
+DOCKER_REGISTRY="yourusername/qerl:v1.0.0" sbatch run_qerl_pipeline.sbatch
 
 # Use a different model
-BASE_MODEL="Qwen/Qwen2.5-7B-Instruct" sbatch run_qerl_pipeline.sbatch
+BASE_MODEL="Qwen/Qwen2.5-7B-Instruct" DOCKER_REGISTRY="yourusername/qerl:latest" sbatch run_qerl_pipeline.sbatch
+
+# Build locally (not recommended for HPC)
+BUILD_DOCKER=true sbatch run_qerl_pipeline.sbatch
 ```
 
 For detailed documentation, see [SLURM_GUIDE.md](SLURM_GUIDE.md).
