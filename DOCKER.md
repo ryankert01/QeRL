@@ -27,7 +27,40 @@ docker build -t yourusername/qerl:v1.0.0 .
 
 ### Build Arguments
 
-The Dockerfile is configured to work with default settings. If you need to customize the build, you can modify the Dockerfile directly.
+The Dockerfile is configured to work with default settings. You can customize the user ID and group ID for better integration with your host system:
+
+```bash
+# Build with custom user/group IDs (useful for rootless Docker)
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t qerl:latest .
+```
+
+This ensures files created inside the container have the same ownership as your host user, which is especially useful for rootless Docker setups.
+
+## Rootless Docker Support
+
+The Docker image is designed to be compatible with rootless Docker for enhanced security. The container runs as a non-root user (`qerluser` with UID 1000 by default).
+
+### Benefits of Rootless Docker
+
+- **Enhanced Security**: Container processes don't run as root
+- **Better Isolation**: Reduced risk of privilege escalation
+- **File Ownership**: Files created in mounted volumes have correct ownership
+
+### Using with Rootless Docker
+
+If you're using rootless Docker, you can match the container user to your host user:
+
+```bash
+# Build with your user/group IDs
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t qerl:latest .
+
+# Run normally - no special flags needed
+docker run --gpus all -it qerl:latest
+```
+
+For more information on setting up rootless Docker, see:
+- [Docker Rootless Mode](https://docs.docker.com/engine/security/rootless/)
+- [NVIDIA Container Toolkit with Rootless Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#rootless-mode)
 
 ## Running the Docker Container
 
@@ -230,7 +263,19 @@ Adjust GPU memory utilization in your training scripts:
 
 ### Permission Issues
 
-If you encounter permission issues with mounted volumes:
+The Docker image runs as a non-root user by default. If you encounter permission issues with mounted volumes, ensure the build arguments match your host user:
+
+```bash
+# Rebuild with matching user/group IDs
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t qerl:latest .
+
+# Then run normally
+docker run --gpus all -it \
+  -v $(pwd)/ckpt:/workspace/QeRL/ckpt \
+  qerl:latest
+```
+
+Alternatively, you can override the user at runtime (not recommended as it may cause issues with conda environment):
 
 ```bash
 docker run --gpus all -it --user $(id -u):$(id -g) \
@@ -245,9 +290,12 @@ docker run --gpus all -it --user $(id -u):$(id -g) \
 3. **Volume Mounting**: Mount data and checkpoints as volumes to persist across container restarts
 4. **Resource Limits**: Set memory and GPU limits for production deployments
 5. **Regular Updates**: Keep your base images and dependencies updated
+6. **Rootless Docker**: Use rootless Docker mode for enhanced security in production environments
 
 ## Security Considerations
 
+- **Non-Root User**: The container runs as a non-root user (`qerluser`) by default for improved security
+- **Rootless Docker**: Compatible with Docker rootless mode - see the Rootless Docker Support section
 - Never include sensitive data (API keys, tokens) in the Docker image
 - Use environment variables or secrets management for sensitive configuration
 - Regularly scan images for vulnerabilities: `docker scan yourusername/qerl:latest`

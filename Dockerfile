@@ -68,6 +68,17 @@ RUN git clone --branch 0.11.0 --depth 1 https://github.com/neuralmagic/compresse
 RUN site_pkg_path=$(python -c 'import site; print(site.getsitepackages()[0])') && \
     cp -v replacement/trainer.py ${site_pkg_path}/transformers/trainer.py
 
+# Create a non-root user for better security (rootless Docker compatibility)
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN groupadd -g ${GROUP_ID} qerluser && \
+    useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash qerluser && \
+    chown -R qerluser:qerluser /workspace/QeRL && \
+    chown -R qerluser:qerluser /opt/conda
+
+# Switch to non-root user
+USER qerluser
+
 # Set the default shell to bash with conda environment activated
 SHELL ["/bin/bash", "-c"]
 
