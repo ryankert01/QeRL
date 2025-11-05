@@ -94,6 +94,19 @@ RUN git clone --branch 0.11.0 --depth 1 https://github.com/neuralmagic/compresse
 RUN site_pkg_path=$(python -c 'import site; print(site.getsitepackages()[0])') && \
     cp -v replacement/trainer.py ${site_pkg_path}/transformers/trainer.py
 
+# Switch back to base shell to create llmcompressor environment
+SHELL ["/bin/bash", "-c"]
+
+# Create llmcompressor environment for model quantization
+RUN source ${CONDA_DIR}/etc/profile.d/conda.sh && \
+    conda create -n llmcompressor python=3.12 -y && \
+    conda activate llmcompressor && \
+    cd llm-compressor && \
+    pip install -e . && \
+    pip install nvidia-ml-py && \
+    cd .. && \
+    echo "conda activate llmcompressor" >> ~/.llmcompressor_activate
+
 # Create a non-root user for better security (rootless Docker compatibility)
 ARG USER_ID=1000
 ARG GROUP_ID=1000

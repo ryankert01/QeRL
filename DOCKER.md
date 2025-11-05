@@ -2,6 +2,10 @@
 
 This guide provides instructions for building and deploying QeRL using Docker.
 
+The Docker image includes two conda environments:
+- **qerl** (Python 3.10) - For training and inference with QeRL
+- **llmcompressor** (Python 3.12) - For quantizing models to NVFP4 format
+
 ## Prerequisites
 
 - Docker installed on your system ([Install Docker](https://docs.docker.com/get-docker/))
@@ -151,6 +155,37 @@ docker run --gpus all -it yourusername/qerl:latest
 
 ## Training with Docker
 
+The Docker image includes two conda environments:
+- **qerl** - For training and inference with QeRL
+- **llmcompressor** - For quantizing models to NVFP4 format
+
+### Example: Quantizing a Model with NVFP4
+
+Before training, you may need to quantize your model to NVFP4 format.
+
+1. Start the container with mounted volumes:
+
+```bash
+docker run --gpus all -it \
+  -v $(pwd)/models:/workspace/QeRL/models \
+  qerl:latest bash
+```
+
+2. Inside the container, activate the llmcompressor environment:
+
+```bash
+conda activate llmcompressor
+```
+
+3. Quantize your model:
+
+```bash
+cd llm-compressor
+python quantize_nvfp4.py --model Qwen/Qwen2.5-7B-Instruct
+```
+
+The quantized model will be saved in the models directory.
+
 ### Example: Training Qwen2.5-7B with NVFP4
 
 1. Start the container with mounted volumes:
@@ -163,20 +198,13 @@ docker run --gpus all -it \
   qerl:latest bash
 ```
 
-2. Inside the container, activate the conda environment:
+2. Inside the container, activate the qerl environment:
 
 ```bash
 conda activate qerl
 ```
 
-3. Prepare your quantized model (if not already done):
-
-```bash
-# This requires a separate llmcompressor environment
-# See the main README.md for details on quantization
-```
-
-4. Run training:
+3. Run training (ensure you have a quantized model ready):
 
 ```bash
 bash training/dapo_qwen2.5-7b_nvfp4_single_gpu.sh
