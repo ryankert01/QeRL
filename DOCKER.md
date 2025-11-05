@@ -255,6 +255,41 @@ Stop the container:
 docker-compose down
 ```
 
+## Running on HPC with SLURM
+
+For running QeRL workflows on HPC clusters with SLURM job scheduling, we provide batch scripts that automate the complete pipeline.
+
+### SLURM Pipeline Script
+
+The `run_qerl_pipeline.sbatch` script runs the complete workflow:
+1. Builds the Docker image (optional)
+2. Quantizes a model to NVFP4 format
+3. Trains the model with QeRL
+
+**Quick Start:**
+
+```bash
+# Set required environment variables
+export WANDB_API_KEY="your_wandb_api_key"
+export HF_TOKEN="your_huggingface_token"
+
+# Submit the job
+mkdir -p logs
+sbatch run_qerl_pipeline.sbatch
+```
+
+**Customization:**
+
+```bash
+# Skip Docker build if image already exists
+BUILD_DOCKER=false sbatch run_qerl_pipeline.sbatch
+
+# Use a different model
+BASE_MODEL="Qwen/Qwen2.5-7B-Instruct" sbatch run_qerl_pipeline.sbatch
+```
+
+For detailed documentation, see [SLURM_GUIDE.md](SLURM_GUIDE.md).
+
 ## Optimizing Image Size
 
 The Docker image is quite large due to CUDA toolkit, PyTorch, and other dependencies. To optimize:
