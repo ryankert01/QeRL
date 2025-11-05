@@ -9,22 +9,42 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CONDA_ALWAYS_YES=true
 
 # Install system dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     wget \
     build-essential \
     ca-certificates \
+    # Removed: libmamba (It's not an APT package on this base image)
     && rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh && \
-    /opt/conda/bin/conda clean --all --yes && \
-    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc && \
-    /opt/conda/bin/conda config --set always_yes yes
+# Install Miniconda, configure channels, and create the 'qerl' environment
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
+    /bin/bash miniconda.sh -b -p ${CONDA_DIR} && \
+    rm miniconda.sh && \
+    # Clean up installation to save space
+    ${CONDA_DIR}/bin/conda clean -afy && \
+    \
+    # *** FIX 1: CONDAPATH, TOS, and CHANNEL CONFIGURATION ***
+    # Conda is now installed. Ensure its bin directory is in PATH for the remaining commands.
+    export PATH=${CONDA_DIR}/bin:$PATH && \
+    \
+    # Accept TOS non-interactively (no -y flag)
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    \
+    # Configure channels (conda-forge priority)
+    conda config --remove-key channels || true && \
+    conda config --add channels conda-forge && \
+    conda config --set channel_priority strict && \
+    \
+    # Create environment (ONLY ONCE)
+    conda create -n qerl python=3.10 -y && \
+    \
+    # Setup activation for non-interactive shell and subsequent commands
+    ln -s ${CONDA_DIR}/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". ${CONDA_DIR}/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate qerl" >> ~/.bashrc
 
 # Set working directory
 WORKDIR /workspace/QeRL
@@ -32,15 +52,19 @@ WORKDIR /workspace/QeRL
 # Copy the repository files
 COPY . .
 
-# Create conda environment and install dependencies
-RUN conda create -n qerl python=3.10 -y && \
-    echo "source activate qerl" >> ~/.bashrc
+# *** FIX 2: Remove redundant environment creation step ***
+# The previous step now handles environment creation. This RUN command is deleted.
+# OLD: RUN conda create -n qerl python=3.10 -y && \
+# OLD:     echo "source activate qerl" >> ~/.bashrc
 
 # Activate environment and install CUDA toolkit
+# Use the correct SHELL form for Conda activation in subsequent RUN commands
 SHELL ["conda", "run", "-n", "qerl", "/bin/bash", "-c"]
 
-RUN conda install nvidia/label/cuda-12.4.1::cuda -y && \
-    conda install -c nvidia/label/cuda-12.4.1 cudatoolkit -y
+# *** FIX 3: CUDA INSTALLATION (Resolve strict repo priority error) ***
+# The fix uses `--override-channels` to allow Conda to pull the CUDA package from the nvidia channel, 
+# bypassing the 'strict repo priority' conflict with conda-forge/defaults.
+RUN conda install -c nvidia/label/cuda-12.4.1 -c conda-forge cuda=12.4.1 cudatoolkit -y
 
 # Install QeRL dependencies
 RUN GIT_LFS_SKIP_SMUDGE=1 pip install -e ".[dev]" && \
