@@ -1,0 +1,73 @@
+# Docker ignore file for QeRL
+# Exclude files that shouldn't be in the Docker image
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+assets/
+
+# Training outputs and checkpoints
+ckpt/
+wandb/
+*.ckpt
+*.pth
+
+# Downloaded models (these should be mounted or downloaded at runtime)
+models/
+*.safetensors
+*.bin
+
+# Compressed tensors (will be cloned during build)
+compressed-tensors/
+
+# vLLM (will be installed during build)
+vllm/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# LLM compressor quantization (optional, depends on use case)
+# llm-compressor/
+
+# Evaluation outputs
+evals/
